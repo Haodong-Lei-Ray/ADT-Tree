@@ -1,13 +1,17 @@
 
-# LANTERN
+# PEANUT
 
-This repository is an official PyTorch implementation of the paper [LANTERN: Accelerating Visual Autoregressive Models via Relaxed Speculative Decoding](https://arxiv.org/abs/2410.03355) (ICLR 2025) and [LANTERN++: Enhanced Relaxed Speculative Decoding with Static Tree Drafting for Visual Auto-regressive Models](https://arxiv.org/abs/2502.06352) (ICLRW - SCOPE(Oral) 2025), which supports various functionalities related to LANTERN, including model inference, drafter model training, drafter model training data generation and image decoding for image generation.
+This repository is an official PyTorch implementation of the paper PEANUT: Fast Inference of Visual Autoregressive Model with Adjacency-Adaptive Dynamical Draft Trees.
+
+All main code refers to the project [LANTERN](https://github.com/jadohu/LANTERN)
+
+Thank the LANTERN team for their contributions to the open-source community
 
 ---
 
 ## 📰 News
 
-- **[2025-03-05] 🎉🎉🎉 LANTERN is released! 🎉🎉🎉**
+- **[2025-06-17] 🎉🎉🎉 PEANUT is released! 🎉🎉🎉**
 
 ---
 
@@ -351,7 +355,7 @@ This project is distributed under the Chameleon License by Meta Platforms, Inc. 
 ## 🙏 Acknowledgement
 This repository is built with extensive reference to [FoundationVision/LlamaGen](https://github.com/FoundationVision/LlamaGen), [Alpha-VLLM/Lumina-mGPT](https://github.com/Alpha-VLLM/Lumina-mGPT) and [SafeAILab/EAGLE](https://github.com/SafeAILab/EAGLE), leveraging many of their core components and approaches.
 
----
+<!-- ---
 
 ## 📄 Citation
 
@@ -368,4 +372,4 @@ This repository is built with extensive reference to [FoundationVision/LlamaGen]
   journal={arXiv preprint arXiv:2410.03355},
   year={2025}
 }
-```
+``` -->
