@@ -15,6 +15,15 @@ Thank the LANTERN team for their contributions to the open-source community
 
 ---
 
+## Performance
+
+Below is a comparison of the effects of different methods
+
+![Performance](data/picture/Performance.png)
+
+
+---
+
 ## 📚 Table of Contents
 1. [Directory Structure](#directory-structure)
 2. [Installation](#installation)
