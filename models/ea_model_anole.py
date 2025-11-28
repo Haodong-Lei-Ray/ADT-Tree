@@ -158,6 +158,7 @@ class EaModel(nn.Module):
             depth=4,
             top_k=10,
             threshold=1.0,
+            tokenizer_base_path=None,
             **kwargs,
     ):
         #assert Type=="LLaMA" or "Mixtral"
@@ -166,8 +167,7 @@ class EaModel(nn.Module):
         base_model = ChameleonForConditionalGeneration.from_pretrained(
             base_model_path, **kwargs
         )
-        tokenizer_base_path=kwargs['tokenizer_base_path']
-        model.tokenizer = TokenManager(f'{tokenizer_base_path}/chameleon/tokenizer/text_tokenizer.json',
+        base_model.tokenizer = TokenManager(f'{tokenizer_base_path}/chameleon/tokenizer/text_tokenizer.json',
                                     f'{tokenizer_base_path}/chameleon/tokenizer/vqgan.yaml',
                                     f'{tokenizer_base_path}/chameleon/tokenizer/vqgan.ckpt',
                                     device='cuda')

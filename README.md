@@ -110,6 +110,40 @@ Below is a comparison of the effects of different methods
 
 ## ✨ Usage
 
+### ANOLE
+PEANUT+LANTERN in MSCOCO2017Val
+```
+cd ./PEANUT
+prompt=MSCOCO2017Val
+model=anole
+temperature=1
+model_type=eagle
+lantern_delta=0.5
+lantern_k=100
+
+#output_path=/home/leihaodong/TIP26/exp/Anole/MSCOCO2017Val/lantern_peanut
+output_path=<your out path>
+
+mkdir -p ${output_path}
+
+nohup python main.py generate_images \
+ --prompt $prompt \
+ --model $model \
+ --temperature $temperature \
+ --model_type $model_type \
+ --model_path leloy/Anole-7b-v0.1-hf \
+ --drafter_path jadohu/anole_drafter \
+ --output_dir $output_path \
+ --lantern \
+ --peanut \
+ --lantern_k $lantern_k \
+ --lantern_delta ${lantern_delta} \
+ --num_images -1 > ${output_path}.log 2>&1 &
+
+```
+
+
+PEANUT+LANTERN
 
 
 ## ⚖️ License
