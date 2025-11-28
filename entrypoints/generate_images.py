@@ -29,6 +29,7 @@ def parse_args():
                         default="ckpts/lumina_mgpt/trained_drafters/lumina_mgpt_7b_768_lr0.0001_p_w0.1"
                         "_bsz2_gradacc_8_epochs20_noise_uniform_std0.2_coupled_False_cfgloss_False"
                         "_cfgscale_3.0_embed_upscale1.0_mscoco2017train30k/state_20")
+    parser.add_argument("--tokenizer_base_path", type=str, help="Path to the tokenizer drafter model", default="/data/lei/localmodel/lumina_mgpt")
     parser.add_argument("--precision", type=str, default="bf16")
     parser.add_argument("--target_size", type=int, default=768)
 
@@ -54,6 +55,9 @@ def parse_args():
     parser.add_argument("--lantern_k", type=int, default="1000", help="Value of k for LANTERN")
     parser.add_argument("--lantern_delta", type=float, default="0.1", help="Value of delta for LANTERN")
     parser.add_argument("--grid_search", action="store_true", help="Run grid search for LANTERN hyperparameters")
+    
+    # PEANUT
+    parser.add_argument("--peanut", action="store_true", help="Use LANTERN for image generation")
 
     parser.add_argument("--static_tree", action="store_true", help="Use static tree based drafting")
     parser.add_argument("--eagle_version", type=int, default=1, help="EAGLE version")
@@ -117,14 +121,20 @@ def load_model(args):
         
         elif args.model_type == 'base':
             from models.kv_variants.modeling_anole_kv import ChameleonForConditionalGeneration
+            from models.base_models.anole.chameleon.chameleon import TokenManager
             dtype = {"bf16": torch.bfloat16, "fp16": torch.float16, "fp32": torch.float32}[args.precision]
             model = ChameleonForConditionalGeneration.from_pretrained(args.model_path).to(dtype=dtype, device='cuda')
+            tokenizer_base_path=args.tokenizer_base_path
+            model.tokenizer = TokenManager(f'{tokenizer_base_path}/chameleon/tokenizer/text_tokenizer.json',
+                                        f'{tokenizer_base_path}/chameleon/tokenizer/vqgan.yaml',
+                                        f'{tokenizer_base_path}/chameleon/tokenizer/vqgan.ckpt',
+                                        device='cuda')
             model.eval()
         
         elif args.model_type == 'eagle':
             from models.ea_model_anole import EaModel
             dtype = {"bf16": torch.bfloat16, "fp16": torch.float16, "fp32": torch.float32}[args.precision]
-            model = EaModel.from_pretrained(base_model_path=args.model_path, ea_model_path=args.drafter_path).to(dtype=dtype, device='cuda')
+            model = EaModel.from_pretrained(base_model_path=args.model_path, ea_model_path=args.drafter_path, tokenizer_base_path=args.tokenizer_base_path).to(dtype=dtype, device='cuda')
             model.eval()
         
         else:
@@ -153,31 +163,35 @@ def load_model(args):
 
 def load_prompts(args):
     prompts = []
+    output_file_name_list = []
+    print(f"Load {args.prompt}")
     if args.prompt == "PartiPrompts":
         with open('data/prompts/PartiPrompts.tsv', 'r') as f:
             tsv_reader = csv.DictReader(f, delimiter='\t')
-            for row in tsv_reader:
+            for idx, row in enumerate(tsv_reader):
                 prompts.append(row['Prompt'])
+                output_file_name_list.append(idx)
     elif args.prompt == "MSCOCO2017Val":
-        with open('data/prompts/captions_val2017_longest.json', 'r') as f:
-            captions = json.load(f)
-            for caption in captions:
+        from pycocotools.coco import COCO
+        coco = COCO("data/prompts/captions_val2017.json")
+        img_id_list = coco.getImgIds()
+        top_k = 0
+        if args.num_images == -1:
+            img_id_len = len(img_id_list)
+        else:
+            img_id_len = args.num_images
+        for i in range(img_id_len):
+            img_id = img_id_list[i]
+            img_name = coco.loadImgs(img_id)[0]
+            ann_ids = coco.getAnnIds(imgIds=img_id)
+            anns = coco.loadAnns(ann_ids)
+            for j, ann in enumerate(anns):
+                ann_id = ann['id']
+                caption = ann["caption"]
                 prompts.append(caption)
-    elif args.prompt == "MSCOCO2014Val":
-        with open('data/prompts/captions_val_2014.json', 'r') as f:
-            captions = json.load(f)
-            for caption in captions:
-                prompts.append(caption)
-    elif args.prompt == "MSCOCO2017Train":
-        with open('data/prompts/captions_train2017_extracted.json', 'r') as f:
-            captions = json.load(f)
-            for caption in captions:
-                prompts.append(caption['caption'])
-    elif args.prompt == "SJDPrompts":
-        with open('data/prompts/SJDPrompts.tsv', 'r') as f:
-            tsv_reader = csv.DictReader(f, delimiter='\t')
-            for row in tsv_reader:
-                prompts.append(row['Prompt'])
+                output_file_name_list.append(ann_id)
+                if j >= top_k:
+                    break
     else:
         # Single prompt input
         prompts = [args.prompt] * args.num_images
@@ -193,12 +207,13 @@ def load_prompts(args):
     
     if args.num_images < len(prompts):
         print(f"Number of images to generate is less than the number of prompts. Sampling {args.num_images} prompts.")
-        prompts = random.sample(prompts, args.num_images)
+        # prompts = random.sample(prompts, args.num_images)
+        prompts = prompts[:args.num_images]
     else:
         print(f"Number of images to generate is greater than the number of prompts. Generating only {len(prompts)} images and no sampling.")
         pass
     
-    return prompts
+    return prompts, output_file_name_list
 
 def generate_and_save_image(model, model_name, prompt, img_save_path, **kwargs):
     # print(f"Generating image for prompt: {prompt}")
@@ -236,6 +251,9 @@ def generate_and_save_image(model, model_name, prompt, img_save_path, **kwargs):
     if USE_EXPERIMENTAL_FEATURES:
         generate_params["tree_choices"] = kwargs["tree_choices"]
         generate_params["drafter_top_k"] = kwargs["drafter_top_k"]
+    
+    if "peanut" in kwargs:
+        generate_params["peanut"] = kwargs.get("peanut", False)
 
     generated_tokens, step_compression, latency = model.generate(**generate_params)
     _, generated_image = model.decode_ids(generated_tokens)
@@ -254,7 +272,7 @@ def run_generate_image(args):
         set_seed(args.random_seed)
     
     model = load_model(args)
-    prompts = load_prompts(args)
+    prompts, output_file_name_list = load_prompts(args)
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
 
@@ -267,6 +285,7 @@ def run_generate_image(args):
         else:
             q1 = prompt
 
+        os.makedirs(os.path.join(args.output_dir, "img"), exist_ok=True)
         generate_image_kwargs = {
             "model" : model,
             "model_name" : args.model,
@@ -278,8 +297,9 @@ def run_generate_image(args):
             "lantern": args.lantern,
             "lantern_k": args.lantern_k,
             "lantern_delta": args.lantern_delta,
-            "img_save_path": f"{args.output_dir}/prompt_{idx}.png",
+            "img_save_path": f"{args.output_dir}/img/{output_file_name_list[idx]}.png",
             "static_tree": args.static_tree,
+            "peanut": args.peanut
         }
 
         if USE_EXPERIMENTAL_FEATURES:
@@ -296,8 +316,9 @@ def run_generate_image(args):
 
         statistics = {
             "prompt": prompt,
-            "step_compression": step_compression,
-            "latency": latency
+            "acceptance_length": step_compression,
+            "time": latency,
+            "ann_id": output_file_name_list[idx]
         }
 
         global_statistics[f"prompt_{idx}"] = statistics

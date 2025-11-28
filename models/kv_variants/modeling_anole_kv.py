@@ -1603,11 +1603,6 @@ class ChameleonForConditionalGeneration(ChameleonPreTrainedModel, GenerationMixi
         self.model = ChameleonModel(config)
         self.vocab_size = config.vocab_size
         self.lm_head = nn.Linear(config.hidden_size, config.vocab_size, bias=False)
-        base_path="/data/lei/localmodel/lumina_mgpt"
-        self.tokenizer = TokenManager(f'{base_path}/chameleon/tokenizer/text_tokenizer.json',
-                                      f'{base_path}/chameleon/tokenizer/vqgan.yaml',
-                                      f'{base_path}/chameleon/tokenizer/vqgan.ckpt',
-                                      device='cuda')
         # Initialize weights and apply final processing
         self.non_image_tokens = [i for i in range(0, 4)] + [i for i in range(8196, 65536)]
         self.non_image_tokens = torch.tensor(self.non_image_tokens).to(self.model.device)

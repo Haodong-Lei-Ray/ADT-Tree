@@ -146,7 +146,6 @@ class EaModel(nn.Module):
         self.non_image_tokens = [i for i in range(0, 4)] + [i for i in range(8196, 65536)]
         self.non_image_tokens = torch.tensor(self.non_image_tokens).to(device)
         self.image_token_offset = 4
-        
 
 
     @classmethod
@@ -167,6 +166,11 @@ class EaModel(nn.Module):
         base_model = ChameleonForConditionalGeneration.from_pretrained(
             base_model_path, **kwargs
         )
+        tokenizer_base_path=kwargs['tokenizer_base_path']
+        model.tokenizer = TokenManager(f'{tokenizer_base_path}/chameleon/tokenizer/text_tokenizer.json',
+                                    f'{tokenizer_base_path}/chameleon/tokenizer/vqgan.yaml',
+                                    f'{tokenizer_base_path}/chameleon/tokenizer/vqgan.ckpt',
+                                    device='cuda')
 
         configpath=os.path.join(ea_model_path,"config.json")
         if not os.path.exists(configpath):
