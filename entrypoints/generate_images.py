@@ -221,7 +221,7 @@ def generate_and_save_image(model, model_name, prompt, img_save_path, **kwargs):
         generate_params = {
             "images": [],
             "qas": [[prompt, None]],
-            "max_gen_len": 2354,
+            "max_gen_len": 2354+256,
             "temperature": kwargs["temperature"],
             "top_k": kwargs["top_k"],
             "cfg_scale": kwargs["cfg"],

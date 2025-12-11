@@ -17,6 +17,7 @@
 from functools import cached_property
 import math
 from typing import Optional, Tuple, Union
+import os
 
 import torch
 from torch import nn
@@ -47,6 +48,8 @@ from transformers.generation.utils import (
 from transformers.generation.configuration_utils import GenerationConfig
 
 from models.configs.configuration_lumina_mgpt import ChameleonConfig, ChameleonVQVAEConfig
+
+from .item_processor import get_double_cfg_input_ids
 
 if is_flash_attn_2_available():
     from flash_attn.bert_padding import index_first_axis, pad_input, unpad_input  # noqa
@@ -1467,9 +1470,42 @@ class ChameleonForConditionalGeneration(ChameleonPreTrainedModel):
         self.model = ChameleonModel(config)
         self.vocab_size = config.vocab_size
         self.lm_head = nn.Linear(config.hidden_size, config.vocab_size, bias=False)
+        self.cfg_repeat_name_list = [
+                'inputs_embeds', 'input_ids', 'pixel_values', 
+            ]
 
         # Initialize weights and apply final processing
         self.post_init()
+
+    def prepare_cfg_input(
+            self, 
+            model_inputs, 
+            cfg_repeat_name_list, 
+            prefill_num=None,
+            neg_input_ids = None,
+        ):
+            def cfg_repeat(x):
+                return x.repeat(2, *([1] * (len(x.shape) - 1)))
+            
+            for name in cfg_repeat_name_list:
+                if (name in model_inputs) and (model_inputs[name] is not None):
+
+                    if name == 'attention_mask':
+                        model_inputs[name] = cfg_repeat(model_inputs[name])
+                        B = model_inputs[name].shape[0]
+                        model_inputs[name][B//2:, :prefill_num] = 0
+                    elif name == 'input_ids' and neg_input_ids is not None:
+                        input_ids = model_inputs[name]
+                        neg_input_ids = neg_input_ids
+                        model_inputs[name] = get_double_cfg_input_ids(
+                            input_ids, 
+                            neg_input_ids,
+                            pad_category = self.config.pad_token_id,
+                        )
+                    else:
+                        model_inputs[name] = cfg_repeat(model_inputs[name])
+
+            return model_inputs
 
     def get_input_embeddings(self):
         return self.model.embed_tokens
@@ -1682,6 +1718,10 @@ class ChameleonForConditionalGeneration(ChameleonPreTrainedModel):
         this_peer_finished = False
         unfinished_sequences = torch.ones(batch_size, dtype=torch.long, device=input_ids.device)
         model_kwargs = self._get_initial_cache_position(input_ids, model_kwargs)
+        
+        gen_loop_num=0
+        do_cfg=True
+        is_force_no_cfg=False
 
         while self._has_unfinished_sequences(
             this_peer_finished, synced_gpus, device=input_ids.device, cur_len=cur_len, max_length=max_length
@@ -1693,6 +1733,14 @@ class ChameleonForConditionalGeneration(ChameleonPreTrainedModel):
             model_inputs.update({"output_attentions": output_attentions} if output_attentions else {})
             model_inputs.update({"output_hidden_states": output_hidden_states} if output_hidden_states else {})
 
+            if do_cfg:
+                model_inputs = self.prepare_cfg_input(
+                    model_inputs,
+                    cfg_repeat_name_list = self.cfg_repeat_name_list,
+                    neg_input_ids = model_kwargs.get(
+                        'neg_input_ids', None
+                    ) if (gen_loop_num == 0) else None,
+                )
             # forward pass to get next token
             outputs = self(**model_inputs, return_dict=True)
 
@@ -1704,6 +1752,14 @@ class ChameleonForConditionalGeneration(ChameleonPreTrainedModel):
             next_token_logits = outputs.logits.clone()[:, -1, :].float()
 
             # pre-process distribution
+            guidance_scale = self.guidance_scale
+            if do_cfg:
+                conditional_logits, unconditional_logits = next_token_logits.chunk(2, dim=0)
+                if is_force_no_cfg:
+                    next_token_logits = conditional_logits
+                else:
+                    next_token_logits = guidance_scale * (conditional_logits - unconditional_logits) + unconditional_logits
+            
             next_token_scores = logits_processor(input_ids, next_token_logits)
 
             # Store scores, attentions and hidden_states when required
@@ -1730,6 +1786,10 @@ class ChameleonForConditionalGeneration(ChameleonPreTrainedModel):
             if do_sample:
                 probs = nn.functional.softmax(next_token_scores, dim=-1)
                 # TODO (joao): this OP throws "skipping cudagraphs due to ['incompatible ops']", find solution
+                # save_dir = "/home/leihaodong/TIP26/scripts/pic/p"
+                # file_name = f"{cur_len}.pt"
+                # save_path = os.path.join(save_dir, file_name)
+                # torch.save(next_token_scores, save_path)
                 next_tokens = torch.multinomial(probs, num_samples=1).squeeze(1)
             else:
                 next_tokens = torch.argmax(next_token_scores, dim=-1)
@@ -1759,6 +1819,7 @@ class ChameleonForConditionalGeneration(ChameleonPreTrainedModel):
             unfinished_sequences = unfinished_sequences & ~stopping_criteria(input_ids, scores)
             this_peer_finished = unfinished_sequences.max() == 0
             cur_len += 1
+            gen_loop_num += 1
 
             # This is needed to properly delete outputs.logits which may be very large for first iteration
             # Otherwise a reference to outputs is kept which keeps the logits alive in the next iteration

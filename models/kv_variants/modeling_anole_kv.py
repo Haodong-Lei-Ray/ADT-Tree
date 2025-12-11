@@ -48,6 +48,7 @@ from transformers.utils import (
 from models.configs.configuration_anole import ChameleonConfig, ChameleonVQVAEConfig
 from models.base_models.anole.chameleon.chameleon import TokenManager
 from models.drafters.kv_cache import initialize_past_key_values
+import os
 
 
 if is_flash_attn_2_available():
@@ -1818,11 +1819,16 @@ class ChameleonForConditionalGeneration(ChameleonPreTrainedModel, GenerationMixi
             self.model.current_length_data = current_length_data
         generated_tokens = []
 
+        # save_dir = "/home/leihaodong/TIP26/scripts/pic/p"
         for i in range(max_length):
             output = self.forward(input_ids=input_tokens, attention_mask=input_mask, past_key_values=past_key_values, position_ids=input_position_ids)
             logits = output.logits
             cfg_logits = cfg_logit_process(logits, cfg)
             cfg_logits[:, :, self.non_image_tokens] = torch.finfo(cfg_logits.dtype).min
+            # file_name = f"{i}.pt"
+            # save_path = os.path.join(save_dir, file_name)
+            # torch.save(cfg_logits, save_path)
+            # assert False
             next_token, _ = sample(cfg_logits, temperature, top_k, top_p)
             generated_tokens.append(next_token)
             input_tokens = torch.cat([next_token, next_token], dim=0)

@@ -1,4 +1,4 @@
-
+import sys
 import os
 import json
 import logging
@@ -8,6 +8,8 @@ from tqdm import tqdm
 
 from PIL import Image
 import torch
+
+sys.path.append(os.path.abspath("./models/base_models/lumina_mgpt/"))
 
 from .conversation import Conversation
 from.chameleon_vae_ori import (
@@ -54,6 +56,26 @@ def generate_crop_size_list(num_patches, patch_size, max_ratio=4.0):
         else:
             wp -= 1
     return crop_size_list
+
+def get_double_cfg_input_ids(input_ids, neg_input_ids, pad_category):
+    batchsize, prefill_num = input_ids.shape
+    
+    neg_prefill_num = neg_input_ids.shape[1]
+
+    batchsize_cfg = 2 * batchsize
+    max_prefill_num = max(prefill_num, neg_prefill_num)
+
+    new_neg_input_ids = torch.full(
+        (batchsize_cfg, max_prefill_num),
+        pad_category,
+        dtype=input_ids.dtype,
+        device=input_ids.device
+    )
+
+    new_neg_input_ids[:batchsize, -input_ids.shape[1]:] = input_ids
+    new_neg_input_ids[batchsize:, -neg_input_ids.shape[1]:] = neg_input_ids
+
+    return new_neg_input_ids
 
 
 class FlexARItemProcessor(MMConvItemProcessor):
