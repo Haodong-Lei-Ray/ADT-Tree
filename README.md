@@ -12,7 +12,7 @@ Thank the LANTERN team for their contributions to the open-source community
 ## 📰 News
 
 - **[2025-11-28] TODO: Change the eagle tree**
-- **[2025-11-20] 🎉🎉🎉 PEANUT is released! 🎉🎉🎉**
+- **[2025-11-20] 🎉🎉🎉 Our ADT-Tree is released! 🎉🎉🎉**
 - **Paper Portal for Top Conferences in the Field of Artificial intelligence: [CV_Paper_Portal](https://hongsong-wang.github.io/CV_Paper_Portal/)**
 
 ---
@@ -156,7 +156,7 @@ This project is distributed under the Chameleon License by Meta Platforms, Inc. 
 ## 🙏 Acknowledgement
 This repository is built with extensive reference to [FoundationVision/LlamaGen](https://github.com/FoundationVision/LlamaGen), [Alpha-VLLM/Lumina-mGPT](https://github.com/Alpha-VLLM/Lumina-mGPT) and [SafeAILab/EAGLE](https://github.com/SafeAILab/EAGLE), leveraging many of their core components and approaches.
 
-<!-- ---
+
 
 ## 📄 Citation
 
@@ -170,4 +170,4 @@ This repository is built with extensive reference to [FoundationVision/LlamaGen]
       primaryClass={cs.CV},
       url={https://arxiv.org/abs/2512.21857}, 
 }
-``` -->
+
