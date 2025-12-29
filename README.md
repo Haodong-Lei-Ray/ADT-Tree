@@ -23,7 +23,7 @@ Thank the LANTERN team for their contributions to the open-source community
 
 Below is a comparison of the effects of different methods
 
-![Performance](data/picture/performance.png)
+![Performance](data/picture/Performance.png)
 
 ---
 
