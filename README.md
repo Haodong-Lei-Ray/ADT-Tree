@@ -1,7 +1,7 @@
 
-# PEANUT
+# ADT-Tree: Fast Inference of Visual Autoregressive Model
 
-This repository is an official PyTorch implementation of the paper PEANUT: Fast Inference of Visual Autoregressive Model with Adjacency-Adaptive Dynamical Draft Trees.
+This repository is an official PyTorch implementation of the paper [Fast Inference of Visual Autoregressive Model with Adjacency-Adaptive Dynamical Draft Trees](https://arxiv.org/abs/2512.21857).
 
 All main code refers to the project [LANTERN](https://github.com/jadohu/LANTERN)
 
@@ -13,6 +13,7 @@ Thank the LANTERN team for their contributions to the open-source community
 
 - **[2025-11-28] TODO: Change the eagle tree**
 - **[2025-11-20] 🎉🎉🎉 PEANUT is released! 🎉🎉🎉**
+- **Paper Portal for Top Conferences in the Field of Artificial intelligence: [CV_Paper_Portal](https://hongsong-wang.github.io/CV_Paper_Portal/)**
 
 ---
 
@@ -160,16 +161,13 @@ This repository is built with extensive reference to [FoundationVision/LlamaGen]
 ## 📄 Citation
 
 ```
-@article{jang2024lantern,
-  title={LANTERN: Accelerating Visual Autoregressive Models with Relaxed Speculative Decoding},
-  author={Jang, Doohyuk and Park, Sihwan and Yang, June Yong and Jung, Yeonsung and Yun, Jihun and Kundu, Souvik and Kim, Sung-Yub and Yang, Eunho},
-  journal={arXiv preprint arXiv:2410.03355},
-  year={2024}
-}
-@article{park2025lanternenhancedrelaxedspeculative,
-  title={LANTERN++: Enhanced Relaxed Speculative Decoding with Static Tree Drafting for Visual Auto-regressive Models}, 
-  author={Sihwan Park and Doohyuk Jang and Sungyub Kim and Souvik Kundu and Eunho Yang},
-  journal={arXiv preprint arXiv:2410.03355},
-  year={2025}
+@misc{lei2025fastinferencevisualautoregressive,
+      title={Fast Inference of Visual Autoregressive Model with Adjacency-Adaptive Dynamical Draft Trees}, 
+      author={Haodong Lei and Hongsong Wang and Xin Geng and Liang Wang and Pan Zhou},
+      year={2025},
+      eprint={2512.21857},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2512.21857}, 
 }
 ``` -->
