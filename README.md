@@ -38,10 +38,10 @@ Below is a comparison of the effects of different methods
     
     Install the dependencies listed in `requirements.txt`.
     ```bash
-    git clone https://github.com/Haodong-Lei-Ray/PEANUT.git
-    cd PEANUT
-    conda create -n PEANUT python=3.10 -y
-    conda activate PEANUT
+    git clone https://github.com/Haodong-Lei-Ray/ADT-Tree.git
+    cd ADT-Tree
+    conda create -n ADT-Tree python=3.10 -y
+    conda activate ADT-Tree
     pip install -r requirements.txt
     ```
 
@@ -116,9 +116,9 @@ Below is a comparison of the effects of different methods
 ## ✨ Usage
 
 ### ANOLE
-PEANUT+LANTERN in MSCOCO2017Val
+ADT-Tree+LANTERN in MSCOCO2017Val
 ```
-cd ./PEANUT
+cd ./ADT-Tree
 prompt=MSCOCO2017Val
 model=anole
 temperature=1
@@ -126,7 +126,7 @@ model_type=eagle
 lantern_delta=0.5
 lantern_k=100
 
-#output_path=/home/leihaodong/TIP26/exp/Anole/MSCOCO2017Val/lantern_peanut
+#output_path=/home/leihaodong/TIP26/exp/Anole/MSCOCO2017Val/lantern_ADT-Tree
 output_path=<your out path>
 
 mkdir -p ${output_path}
@@ -148,7 +148,7 @@ nohup python main.py generate_images \
 ```
 
 
-PEANUT+LANTERN
+ADT-Tree+LANTERN
 
 
 ## ⚖️ License
