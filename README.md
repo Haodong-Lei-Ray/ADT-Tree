@@ -3,6 +3,8 @@
 
 This repository is an official PyTorch implementation of the paper [Fast Inference of Visual Autoregressive Model with Adjacency-Adaptive Dynamical Draft Trees](https://arxiv.org/abs/2512.21857).
 
+Autoregressive (AR) image models achieve diffusion-level quality but suffer from sequential inference, requiring approximately 2,000 steps for a 576x576 image. Speculative decoding with draft trees accelerates LLMs yet underperforms on visual AR models due to spatially varying token prediction difficulty. We identify a key obstacle in applying speculative decoding to visual AR models: inconsistent acceptance rates across draft trees due to varying prediction difficulties in different image regions. We propose Adjacency-Adaptive Dynamical Draft Trees (ADT-Tree), an adjacency-adaptive dynamic draft tree that dynamically adjusts draft tree depth and width by leveraging adjacent token states and prior acceptance rates. ADT-Tree initializes via horizontal adjacency, then refines depth/width via bisectional adaptation, yielding deeper trees in simple regions and wider trees in complex ones. 
+
 All main code refers to the project [LANTERN](https://github.com/jadohu/LANTERN)
 
 Thank the LANTERN team for their contributions to the open-source community
