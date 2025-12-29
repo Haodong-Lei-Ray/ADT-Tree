@@ -19,9 +19,9 @@ Thank the LANTERN team for their contributions to the open-source community
 
 ## Method and Performance
 
-Below is a comparison of the effects of different methods
-
 ![Method](data/picture/method.png)
+
+Below is a comparison of the effects of different methods
 
 ![Performance](data/picture/performance.png)
 
